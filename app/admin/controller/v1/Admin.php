@@ -71,10 +71,6 @@ class Admin extends Base
             if (!isset($this->inputData['id']) || (int)$this->inputData['id'] <= 0) {
                 return $this->jr('请输入需要获取的id值');
             }
-            //额外增加请求参数
-            if (!empty($this->params)) {
-                $this->inputData = array_merge($this->inputData,$this->params);
-            }
             if ($this->commonValidate(__FUNCTION__,$this->inputData)) {
                 return $this->message(true);
             }
@@ -102,10 +98,6 @@ class Admin extends Base
             //前置拦截
             if (empty($this->inputData)) {
                 return $this->jr('请检查提交过来的数据');
-            }
-            //额外增加请求参数
-            if (!empty($this->params)) {
-                $this->inputData = array_merge($this->inputData,$this->params);
             }
             $this->inputData['salt'] = Str::random(mt_rand(5,10));
 

@@ -28,6 +28,7 @@ class Base extends BaseController
 
     /**
      * 需要额外加入的请求数据，
+     * 如：前端请求过来10个字段，需要接口自动补齐数据2个死数据，则在这个地方进行设置。
      * @var array
      */
     protected array $params = [];
@@ -63,6 +64,13 @@ class Base extends BaseController
     protected array $order = [];
 
     /**
+     * 自定义查询条件,查询条件遵循 tp6.1 的查询语法
+     *
+     * @var array
+     */
+    protected array $rawWhere = [];
+
+    /**
      * 分页页码
      * @var integer
      */
@@ -70,19 +78,17 @@ class Base extends BaseController
 
     /**
      * 分页数量
-     * @var integer
+     * @var int
      */
     protected int $size = 0;
 
     /**
      * 模型单例
-     * @var null
      */
     protected mixed $model = null;
 
     /**
      * 验证器单例
-     * @var null
      */
     protected mixed $validate = null;
 
@@ -130,46 +136,24 @@ class Base extends BaseController
     protected array $inputData = [];
 
     /**
-     * 请求的字段名
+     * 请求的字段名，如：前端请求过来 a1 b1 c1 d1,接口默认是全接收，如果不需要全接收，则指定["a1","b1"]则只接口这两个字段的值
      * @var array
      */
     protected array $inputField = [];
 
     /**
      * 列表显示字段，默认为对应数据表全部字段，包括验证规则
+     * 默认返回所有数据库字段
+     * 如果只需要返回指定字段，则["a1","b1"]指定具体的字段名称，同样要指定验证字段的值
      * @var array
      */
-    protected array $indexField = [];
+    protected array $outputField = [];
 
     /**
-     * 编辑页字段，默认为对应数据表全部字段，包括验证规则
+     * 接口忽略字段，不允许提交过来的字段
      * @var array
      */
-    protected array $editField = [];
-
-    /**
-     * 编辑接口忽略字段，不允许提交过来的字段
-     * @var array
-     */
-    protected array $editExpectField = [];
-
-    /**
-     * 新增页面字段，默认为对应数据表全部字段，包括验证规则
-     * @var array
-     */
-    protected array $addField = [];
-
-    /**
-     * 新增接口忽略字段，不允许提交过来的字段
-     * @var array
-     */
-    protected array $addExpectField = [];
-
-    /**
-     * 详情接口字段，默认为对应数据表全部字段，包括验证规则
-     * @var array
-     */
-    protected array $infoField = [];
+    protected array $exceptField = [];
 
     /**
      * 删除前置检测条件，是否有被使用的数据，如果有，则不让删除。并提示，默认不检测，直接删除数据 false = 未被使用
@@ -190,6 +174,41 @@ class Base extends BaseController
     protected int $pkId;
 
     /**
+     * 需要额外加入的请求数据，
+     * 如：前端请求过来10个字段，需要接口自动补齐数据2个死数据，则在这个地方进行设置。['name' => 'root','key'=>'server']
+     * @param array $params
+     * @return Base
+     */
+    public function setParams(array $params = []):Base
+    {
+        $this->inputData = array_merge($this->inputData,$params);
+        return $this;
+    }
+
+    /**
+     * 设置指定字段请求来的值
+     * @param array $fields
+     * @return $this
+     */
+    public function setInputField(array $fields = []):Base
+    {
+        $this->inputField = $fields;
+        return $this;
+    }
+
+    /**
+     * 设置返回给前端接口里面列表字段
+     * 如：数据查出来有20个字段，前端只需要4个，则会删除其他16个字段不返回给前端，默认是全返回
+     * @param array $fields
+     * @return $this
+     */
+    public function setOutputField(array $fields = []):Base
+    {
+        $this->outputField = $fields;
+        return $this;
+    }
+
+    /**
      * 初始化方法
      */
     public function initialize():void
@@ -202,6 +221,7 @@ class Base extends BaseController
         } else {
             $tmpField = '';
         }
+        // 初始化请求过来的数据
         $this->inputData = $this->request->param($tmpField);
 
         // 提取请求条件 模糊查询 精准查询
@@ -250,6 +270,28 @@ class Base extends BaseController
          * 更新登录用户的token有效时间
          */
         $this->pkId = $this->inputData['id'] ?? null;
+        // 初始化分页当前页数据
+        $this->page = (int)$this->inputData['page'] ?? 0;
+        // 初始化分页数量
+        $this->size = (int)$this->inputData['size'] ?? 0;
+
+        // 保存单独的请求参数
+        if (!empty($this->addField)) {
+            $this->inputData = array_merge($this->inputData,$this->addField);
+        }
+        // 忽略指定忽略字段
+        if (!empty($this->exceptField)) {
+            foreach ($this->exceptField as $field) {
+                if (isset($this->inputData[$field])) {
+                    unset($this->inputData[$field]);
+                }
+            }
+        }
+        // 输出字段字段
+        if (!empty($this->outputField)) {
+            $this->field = $this->outputField;
+        }
+
     }
 
     /**
@@ -366,22 +408,11 @@ class Base extends BaseController
     public function index() :Json
     {
         try {
-            if (!empty($this->params)) {
-                $this->inputData = array_merge($this->inputData,$this->params);
+            // 验证器验证
+            if ($this->commonValidate(__FUNCTION__,$this->inputData)) {
+                return $this->message(true);
             }
-            //判断是否需要分页
-            if (isset($this->inputData['page']) && $this->inputData['page'] != 0) {
-                $this->page = (int)$this->inputData['page'];
-            }
-
-            if (isset($this->inputData['size']) && $this->inputData['size'] != 0) {
-                $this->size = (int)$this->inputData['size'];
-            }
-            // 列表输出字段
-            if (!empty($this->indexField)) {
-                $this->field = $this->indexField;
-            }
-
+            // 查询模型输出
             $result = $this->model->getIndexList($this->page,$this->size,$this->field,$this->vague,$this->focus,$this->order,$this->range);
 
             $this->sql = $this->model->getLastSql();
@@ -402,23 +433,21 @@ class Base extends BaseController
         try {
             //前置拦截
             if (!$this->pkId) {
-                return $this->jr('请输入需要获取的id值');
+                return $this->jr('【详情】请输入需要获取的id值');
             }
-            //额外增加请求参数
-            if (!empty($this->params)) {
-                $this->inputData = array_merge($this->inputData,$this->params);
-            }
+            // 验证器验证
             if ($this->commonValidate(__FUNCTION__,$this->inputData)) {
                 return $this->message(true);
             }
-            // 列表输出字段
-            if (!empty($this->infoField)) {
-                $this->field = $this->infoField;
-            }
-            $result = $this->model->getInfo((int)$this->inputData['id'],[],$this->field);
+            // 模型查询数据
+            $result = $this->model->getInfo($this->pkId,[],$this->field);
+            // 返回最后一条执行的sql
             $this->sql = $this->model->getLastSql();
+            // 返回最终结果
             return $this->jr(['获取失败','获取成功'],$result);
+
         } catch (Exception $e) {
+            // 接口异常写入
             ExceptionLog::buildExceptionData($e,__LINE__,__FILE__,__CLASS__,__FUNCTION__,'controller',$this->sql,$this->adminInfo);
             return $this->jr('详情数据异常，请查看异常日志或者日志文件进行修复');
         }
@@ -435,27 +464,15 @@ class Base extends BaseController
             if (empty($this->inputData)) {
                 return $this->jr('请检查提交过来的数据');
             }
-            // 额外增加请求参数
-            if (!empty($this->params)) {
-                $this->inputData = array_merge($this->inputData,$this->params);
-            }
             // 保存单独的请求参数
             if (!empty($this->addField)) {
                 $this->inputData = array_merge($this->inputData,$this->addField);
-            }
-            // 忽略指定忽略字段
-            if (!empty($this->addExpectField)) {
-                foreach ($this->addExpectField as $field) {
-                    if (isset($this->inputData[$field])) {
-                        unset($this->inputData[$field]);
-                    }
-                }
             }
             // 验证器
             if ($this->commonValidate(__FUNCTION__,$this->inputData)) {
                 return $this->message(true);
             }
-
+            // 模型处理数据
             $result = $this->model->addData($this->inputData);
             $this->sql = $this->model->getLastSql();
             return $this->jr(['新增失败','新增成功'],$result);
@@ -473,24 +490,13 @@ class Base extends BaseController
         try {
             //前置拦截
             if (!$this->pkId) {
-                return $this->jr('请输入正确的需要修改的ID值');
-            }
-            //额外增加请求参数
-            if (!empty($this->params)) {
-                $this->inputData = array_merge($this->inputData,$this->params);
+                return $this->jr('【更新】请输入正确的需要修改的ID值');
             }
             // 保存单独的请求参数
             if (!empty($this->editField)) {
                 $this->inputData = array_merge($this->inputData,$this->editField);
             }
-            // 忽略指定忽略字段
-            if (!empty($this->editExpectField)) {
-                foreach ($this->editExpectField as $field) {
-                    if (isset($this->inputData[$field])) {
-                        unset($this->inputData[$field]);
-                    }
-                }
-            }
+            // 通用验证
             if ($this->commonValidate(__FUNCTION__,$this->inputData)) {
                 return $this->message(true);
             }
@@ -511,11 +517,7 @@ class Base extends BaseController
         try {
             //前置拦截
             if (!$this->pkId) {
-                return $this->jr('请输入需要删除的ID值');
-            }
-            //额外增加请求参数
-            if (!empty($this->params)) {
-                $this->inputData = array_merge($this->inputData,$this->params);
+                return $this->jr('【删除】请输入需要删除的ID值');
             }
             if ($this->commonValidate(__FUNCTION__,$this->inputData)) {
                 return $this->message(true);
@@ -642,10 +644,6 @@ class Base extends BaseController
             //前置拦截
             if (empty($this->inputData)) {
                 return $this->jr('请检查提交过来的数据');
-            }
-            // 额外增加请求参数
-            if (!empty($this->params)) {
-                $this->inputData = array_merge($this->inputData,$this->params);
             }
             // 保存单独的请求参数
             if (!empty($this->editField)) {
