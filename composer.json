@@ -29,7 +29,9 @@
         "firebase/php-jwt": "^6.5",
         "phpoffice/phpspreadsheet": "^1.28",
         "baiy/think-async": "^1.0",
-        "endroid/qr-code": "^4.8"
+        "endroid/qr-code": "^4.8",
+        "rosell-dk/webp-convert": "^2.9",
+        "ext-curl": "*"
     },
     "require-dev": {
         "symfony/var-dumper": "^4.2",
