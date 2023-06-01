@@ -645,18 +645,6 @@ class Base extends BaseController
             if (empty($this->inputData)) {
                 return $this->jr('请检查提交过来的数据');
             }
-            // 保存单独的请求参数
-            if (!empty($this->editField)) {
-                $this->inputData = array_merge($this->inputData,$this->addField);
-            }
-            // 忽略指定忽略字段
-            if (!empty($this->editExpectField)) {
-                foreach ($this->editExpectField as $field) {
-                    if (isset($this->inputData[$field])) {
-                        unset($this->inputData[$field]);
-                    }
-                }
-            }
             // 验证器
             if ($this->commonValidate(__FUNCTION__,$this->inputData)) {
                 return $this->message(true);

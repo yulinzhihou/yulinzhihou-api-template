@@ -10,8 +10,16 @@
 // +----------------------------------------------------------------------
 use think\facade\Route;
 
-Route::get('think', function () {
-    return 'hello,ThinkPHP6!';
-});
-
-Route::get('hello/:name', 'index/hello');
+return [
+    Route::miss(function(){
+        return json([
+            "status"    =>  999,
+            'message'   =>  '路由地址未定义,不支持直接请求，请使用正确的接口地址和参数，请联系后端小哥哥，QQ:841088704',
+            'method'    =>  request()->method(),
+            'route'     =>  request()->url(),
+            'params'    =>  request()->param(),
+            'create_time'   =>  time(),
+            'date_time'     =>  date("Y-m-d H:i:s",time())
+        ]);
+    })
+];
