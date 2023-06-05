@@ -13,9 +13,16 @@
 > Nginx: nginx/1.23.4
 >
 > Mysql: mysql  Ver 8.0.33 for macos13.3 on x86_64 (Homebrew)
->
+> 
 >
 
+## `PHP拓展` 自行安装，不懂的百度
+- `gd`
+- `xlswriter` 
+- `curl`
+- `fileinfo`
+- `redis`
+- 
 
 ## 集成功能
 1. 数据迁移功能 `think-migration`
@@ -178,3 +185,145 @@ Route::resource('goods','Goods');
 ……
 ……
 ```
+
+## 集成异步队列功能+守护进程，成功解决大文件大数据执行超时的问题
+
+> 实测，异步队列方法不适用于循环数据，因为一个方法里面如果执行循环，如果守护进程开了多个进程的话，还是会卡死，并且方法不一定能跑完。可能会因单个进程资源开销过大，直接被系统 kill 掉
+> 异步方法里面建议执行单一方法，不建议使用循环执行操作数据。
+> 守护进程可以根据电脑配置开多进程进行执行异步队列。
+> 
+### 实用步骤：
+
+- 第一步：创建异步触发方法。 `app\admin\Base.php`
+
+```php
+    /**
+     * 触发异步队列方法【仅用于演示，正常使用请更方法及传参数】
+     * 参数类型和个数根据业务情况来设定
+     */
+    public function doAsyncFunc(string $model, int $versionId, string $fileType, string $index, array $data):string
+    {
+        // 异步执行
+        Async::exec(AsyncBase::class, 'doAsyncItemToMysql', $model,$versionId,$fileType,$index,$data);
+//        Async::execUseCustomQueue(AsyncBase::class, 'doAsyncItemToMysql', $model,$versionId,$fileType,$index,$data);
+        // 异步延迟执行 延迟20秒
+//        Async::delay(mt_rand(1,20), AsyncBase::class, 'doAsyncItemToMysql', $model,$versionId,$fileType,$index,$data);
+        // 异步延迟执行 延迟20秒
+//        Async::delayUseCustomQueue(20, AsyncBase::class, 'doAsyncItemToMysql', $model,$versionId,$fileType,$index,$data);
+        return "执行成功！";
+    }
+```
+
+- 第二步：`app\library\AsyncBase.php` 创建异步队列核心执行方法，先定义一个类,这个类里面的核心执行方法必须是静态方法，且里面处理的业务逻辑尽量是单条数据。如果有多条或者需要循环处理，建议在第一步的时候切分成单点。
+```php
+    /**
+     * 执行单条异步数据到数据库。支持多并发
+     * @param string $model 模型编号
+     * @param int $versionId 版本ID
+     * @param string $fileType 文件类型
+     * @param string $index 文件对应的索引编号字段，如：item_id,gem_id
+     * @param array $data   行数据
+     * @return void
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public static function doAsyncItemToMysql(string $model, int $versionId, string $fileType, string $index, array $data):void
+    {
+        $isDataExists = $model::where('version_id',$versionId)->where($index,$data[$index])->find();
+        if ($isDataExists) {
+            try {
+                $isDataExists->save($data);
+            } catch (\Exception $e) {
+                ExceptionLog::buildExceptionData($e,__LINE__,__FILE__,__CLASS__,__FUNCTION__,'model','');
+                Log::record($e->getMessage());
+            }
+        } else {
+            try {
+                $model::create($data);
+            } catch (\Exception $e) {
+                ExceptionLog::buildExceptionData($e,__LINE__,__FILE__,__CLASS__,__FUNCTION__,'model','');
+                Log::record($e->getMessage());
+            }
+        }
+        Cache::delete($fileType.':version_'.$versionId.':'.$data[$index]);
+    }
+```
+
+- 第三步：确定具体调用的位置， `app\admin\controller\v1\AsyncDemo.php` 即业务逻辑需要处理大数据的位置。比如你访问一个URL需要进行循环拉取更新数据。这个时候在浏览器里面打开，就会无限转圈，甚至还会报500，40x 等一系列问题。这个时候你就可以把这一块的逻辑扔给异步队列进行处理。先给浏览器返回一个结果
+
+```php
+<?php
+
+namespace app\admin\controller\v1;
+
+use app\admin\controller\Base;
+use app\admin\model\ExceptionLog;
+use think\facade\Cache;
+
+/**
+ * 异步队列业务逻辑演示类-
+ * 非正式业务逻辑代码，只是一个演示案例，切务直接使用。
+ */
+class AsyncDemo extends Base
+{
+    /**
+     * 保存新建的资源
+     */
+    public function save():\think\Response\Json
+    {
+        try {
+            $this->inputData = array_merge($this->inputData,$this->request->post());
+            //前置拦截
+            if (empty($this->inputData)) {
+                return $this->jr('请检查提交过来的数据');
+            }
+            // 额外增加请求参数
+            if (!empty($this->params)) {
+                $this->inputData = array_merge($this->inputData,$this->params);
+            }
+
+            // 验证器
+            if ($this->commonValidate(__FUNCTION__,$this->inputData)) {
+                return $this->message(true);
+            }
+
+            $result = $this->model->addData($this->inputData);
+            // 根据新增结果触发异步导入数据
+            if ($result) {
+                $modelName = $this->model->getFileModelById($this->inputData['file_type']);
+                // 改写数据
+                $fileTypeStr = (int)$this->inputData['file_type'];
+                $versionId = (int)$this->inputData['version_id'];
+
+                // 假如需要根据数据库所有数据进行联动更新操作。先获取所有数据，在这个业务方法里面进行所有数据切分成单一执行逻辑交与异步队列
+                $allData = $this->model->getAllData();
+
+                if (!empty($allData)) {
+                    foreach ($allData as $data) {
+                        if ((int)$data > 0) {
+                            $rData = Cache::get($fileTypeStr.':version_'.$versionId.':'.$data);
+                            if (!empty($rData)) {
+                                // 每循环一次，将对应需要异步处理的第一次方法交给异步队列进行处理，
+                                // 这是一个折中的办法 ，目前我用这个方法进行队列处理，还是可以很丝滑的。但还是有一些坑，不过勉强能用了。
+                                // 这里面的坑主要是数据库长连接的问题，还有就是守护进程可能会处于僵尸进程状态，需要重启。暂时是可以用这个文案进行处理
+                                // 目前主要处理大文件excel进行导入数据，大概陆续处理了近1千多万条数据到数据库，文件有1400多个文件。目前没啥大问题
+                                $this->doAsyncFunc($modelName['modelName'],$versionId,$fileTypeStr,(string)array_keys($rData)[0],$rData);
+                            }
+                        }
+                    }
+                }
+
+            }
+            $this->sql = $this->model->getLastSql();
+            return $this->jr(['新增失败','新增成功-请等候3-5分钟刷新查看！'],true);
+        } catch (\Exception $e) {
+            ExceptionLog::buildExceptionData($e,__LINE__,__FILE__,__CLASS__,__FUNCTION__,'controller',$this->sql,$this->adminInfo);
+            return $this->jr('新增异常，请查看异常日志或者日志文件进行修复');
+        }
+
+    }
+
+}
+```
+

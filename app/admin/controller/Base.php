@@ -3,10 +3,13 @@ declare (strict_types = 1);
 
 namespace app\admin\controller;
 
+use app\admin\library\DragonAuth;
 use app\admin\model\ApiLog;
 use app\admin\model\ExceptionLog;
 use app\BaseController;
+use app\library\AsyncBase;
 use app\library\Upload;
+use Baiy\ThinkAsync\Facade\Async;
 use Exception;
 use think\exception\FileException;
 use think\facade\Env;
@@ -714,6 +717,22 @@ class Base extends BaseController
             $newData = $data;
         }
         Log::record($string. '==' . $newData);
+    }
+
+    /**
+     * 触发异步队列方法【仅用于演示，正常使用请更方法及传参数】
+     * 参数类型和个数根据业务情况来设定
+     */
+    public function doAsyncFunc(string $model, int $versionId, string $fileType, string $index, array $data):string
+    {
+        // 异步执行
+        Async::exec(AsyncBase::class, 'doAsyncItemToMysql', $model,$versionId,$fileType,$index,$data);
+//        Async::execUseCustomQueue(AsyncBase::class, 'doAsyncItemToMysql', $model,$versionId,$fileType,$index,$data);
+        // 异步延迟执行 延迟20秒
+//        Async::delay(mt_rand(1,20), AsyncBase::class, 'doAsyncItemToMysql', $model,$versionId,$fileType,$index,$data);
+        // 异步延迟执行 延迟20秒
+//        Async::delayUseCustomQueue(20, AsyncBase::class, 'doAsyncItemToMysql', $model,$versionId,$fileType,$index,$data);
+        return "执行成功！";
     }
 
 }
