@@ -31,7 +31,9 @@
         "baiy/think-async": "^1.0",
         "endroid/qr-code": "^4.8",
         "rosell-dk/webp-convert": "^2.9",
-        "ext-curl": "*"
+        "ext-curl": "*",
+        "ext-xlswriter": "*",
+        "ext-gd": "*"
     },
     "require-dev": {
         "symfony/var-dumper": "^4.2",
