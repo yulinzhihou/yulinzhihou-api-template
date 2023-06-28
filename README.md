@@ -1,8 +1,8 @@
-# yulinzhihou_api 后台接口脚手架
+# yulinzhihou-template-api 接口脚手架
 
 > 基于 `thinkphp 6.1.3`
 >
-> 运行环境要求PHP7.2+，兼容PHP8.1
+> 运行环境要求PHP8.1+
 >
 > 开发环境
 >
@@ -64,7 +64,7 @@ php think migrate:create GoodsCreate
 ```
 示例：
 ```php
-$table = $this->table('goods',['engine'=>'InnoDB','auto_increment'=>true,'charset'=>'utf8','primary_key'=>'id','comment'=>'商品表'])->addIndex('id');
+$table = $this->table('goods',['engine'=>'InnoDB','auto_increment'=>true,'charset'=>'utf8mb4','collation'=>'utf8mb4_general_ci','primary_key'=>'id','comment'=>'商品表'])->addIndex('id');
 $table
     ->addColumn('platform_id','integer',['limit'=>10,'default'=>0,'null'=>false,'comment'=>'平台ID'])
     ->addColumn('language_id','integer',['limit'=>MysqlAdapter::INT_TINY,'default'=>0,'null'=>false,'comment'=>'语言包ID'])
@@ -74,6 +74,7 @@ $table
     ->addColumn('goods_category_id','integer',['limit'=>10,'signed'=>false,'default'=>0,'null'=>false,'comment'=>'商品分类ID'])
     ->addColumn('price','decimal',['scale'=>2,'precision'=>10,'signed'=>false,'default'=>0.00,'null'=>false,'comment'=>'商品价格'])
     ->addColumn('details','text',['comment'=>'商品详情'])
+    ->addColumn('details','text',['limit'=>16,'comment'=>'商品详情'])
     ->addColumn('params','text',['comment'=>'商品参数'])
     ->addColumn('title','string',['limit'=>128,'default'=>'','null'=>false,'comment'=>'页面title'])
     ->addColumn('keywords','string',['limit'=>128,'default'=>'','null'=>false,'comment'=>'关键词'])

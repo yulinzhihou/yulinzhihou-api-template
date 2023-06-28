@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace app\admin\middleware;
 
-use app\admin\library\JwtUtil;
+use app\library\JwtUtil;
 use think\facade\Cache;
 use think\facade\Config;
 use think\facade\Env;
@@ -88,7 +88,7 @@ class checkSign
 //            if ($sn != '' && $sn != Env::get('YF_MANUAL_SN')) {
 //                return $this->doReturn('请联系后台接口，提供手动密钥字符串密钥');
 //            }
-            //TODO:: 暂时不做处理。后期再加验证规则
+            //TODO:: 暂时不做处理。后期再加验证规则，为防止渗透测试，建议增加token走token流程。
             return $next($request);
         } else {
             return $this->doReturn('未登录系统,或已经退出系统',1,599);

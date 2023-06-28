@@ -8,7 +8,7 @@ if (!function_exists('tree')) {
     /**
      * 以pid——id对应，生成树形结构
      * @param array $array
-     * @return array|bool
+     * @return array
      */
     function tree(array $array):array
     {
@@ -42,19 +42,13 @@ if (!function_exists('tree')) {
  */
 if (!function_exists('isVarExists')) {
     function isVarExists(array $arr,string $filed,int $type = 1):bool {
-        switch ($type) {
-            // 验证数组存在值，并且不能为空字符串，不能为空数组
-            case 1:
-                return isset($arr[$filed]) && !empty($arr[$filed]) && $arr[$filed] != '';
-            case 2:
-                return isset($arr[$filed]) && !empty($arr[$filed]);
-            case 3:
-                return isset($arr[$filed]) && $arr[$filed] != '';
-            case 4:
-                return isset($arr[$filed]);
-            default:
-                return false;
-        }
+        return match ($type) {
+            1 => !empty($arr[$filed]) && $arr[$filed] != '',
+            2 => !empty($arr[$filed]),
+            3 => isset($arr[$filed]) && $arr[$filed] != '',
+            4 => isset($arr[$filed]),
+            default => false,
+        };
     }
 }
 
@@ -95,6 +89,10 @@ if (!function_exists('getTreeRemark')) {
 
 }
 
+
+/**
+ * 递归合并树状数组,多维变二维
+ */
 if (!function_exists('assembleTree')) {
 
     /**
@@ -118,132 +116,79 @@ if (!function_exists('assembleTree')) {
 }
 
 
+
 /**
- * 将一个文件单位转为字节
+ * 递归
+ * @param $data array 需要递归的数据
+ * @param $pid integer 上级ID
+ * @param $pf string 上级的字段名
+ * @param $unset bool 为true则去除pid字段
+ * @return array
  */
-if (!function_exists('file_unit_to_byte')) {
-    /**
-     * 将一个文件单位转为字节
-     * @param string $unit 将b、kb、m、mb、g、gb的单位转为 byte
-     */
-    function file_unit_to_byte(string $unit): int
+if (!function_exists('recursive')) {
+    function recursive($data, $pid = 0, $pf = 'pid', $unset = false): array
     {
-        preg_match('/([0-9\.]+)(\w+)/', $unit, $matches);
-        if (!$matches) {
-            return 0;
+        $result = [];
+        foreach ($data as $key => $val) {
+            if ($val[$pf] == $pid) {
+                if ($unset) unset($val[$pf]);
+                $result[$key] = $val;
+                if ($recur = recursive($data, $val['id'], $pf, $unset)) {
+                    $result[$key]['children'] = array_values($recur);
+                }
+            }
         }
-        $typeDict = ['b' => 0, 'k' => 1, 'kb' => 1, 'm' => 2, 'mb' => 2, 'gb' => 3, 'g' => 3];
-        return (int)($matches[1] * pow(1024, $typeDict[strtolower($matches[2])] ?? 0));
+        return array_reverse($result);
     }
 }
 
 
-if (!function_exists('hsv2rgb')) {
 
-    function hsv2rgb($h, $s, $v): array
+
+
+/**
+ * Curl 请求
+ */
+if (function_exists('http')) {
+    /**
+     * curl请求
+     * @param $url  string 请求的url链接
+     * @param $data string|array|mixed 请求的数据
+     * @param bool $is_post 是否是post请求，默认false
+     * @param array $options 是否附带请求头
+     * @return array
+     */
+    function http(string $url, array $data, bool $is_post=false, array $options=[]):array
     {
-        $r = $g = $b = 0;
-
-        $i = floor($h * 6);
-        $f = $h * 6 - $i;
-        $p = $v * (1 - $s);
-        $q = $v * (1 - $f * $s);
-        $t = $v * (1 - (1 - $f) * $s);
-
-        switch ($i % 6) {
-            case 0:
-                $r = $v;
-                $g = $t;
-                $b = $p;
-                break;
-            case 1:
-                $r = $q;
-                $g = $v;
-                $b = $p;
-                break;
-            case 2:
-                $r = $p;
-                $g = $v;
-                $b = $t;
-                break;
-            case 3:
-                $r = $p;
-                $g = $q;
-                $b = $v;
-                break;
-            case 4:
-                $r = $t;
-                $g = $p;
-                $b = $v;
-                break;
-            case 5:
-                $r = $v;
-                $g = $p;
-                $b = $q;
-                break;
-        }
-
-        return [
-            floor($r * 255),
-            floor($g * 255),
-            floor($b * 255)
+        $data  = json_encode($data);
+        $headerArray = [
+            'Content-type: application/json;charset=utf-8',
+            'Accept: application/json'
         ];
-    }
-}
-
-
-if (!function_exists('build_suffix_svg')) {
-    /**
-     * 构建文件后缀的svg图片
-     * @param string $suffix     文件后缀
-     * @param string|null $background 背景颜色，如：rgb(255,255,255)
-     * @return string
-     */
-    function build_suffix_svg(string $suffix = 'file', string $background = null) : string
-    {
-        $suffix = mb_substr(strtoupper($suffix), 0, 4);
-        $total  = unpack('L', hash('adler32', $suffix, true))[1];
-        $hue    = $total % 360;
-        [$r, $g, $b] = hsv2rgb($hue / 360, 0.3, 0.9);
-
-        $background = $background ?: "rgb({$r},{$g},{$b})";
-
-        return '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
-            <path style="fill:#E2E5E7;" d="M128,0c-17.6,0-32,14.4-32,32v448c0,17.6,14.4,32,32,32h320c17.6,0,32-14.4,32-32V128L352,0H128z"/>
-            <path style="fill:#B0B7BD;" d="M384,128h96L352,0v96C352,113.6,366.4,128,384,128z"/>
-            <polygon style="fill:#CAD1D8;" points="480,224 384,128 480,128 "/>
-            <path style="fill:' . $background . ';" d="M416,416c0,8.8-7.2,16-16,16H48c-8.8,0-16-7.2-16-16V256c0-8.8,7.2-16,16-16h352c8.8,0,16,7.2,16,16 V416z"/>
-            <path style="fill:#CAD1D8;" d="M400,432H96v16h304c8.8,0,16-7.2,16-16v-16C416,424.8,408.8,432,400,432z"/>
-            <g><text><tspan x="220" y="380" font-size="124" font-family="Verdana, Helvetica, Arial, sans-serif" fill="white" text-anchor="middle">' . $suffix . '</tspan></text></g>
-        </svg>';
-    }
-}
-
-
-if (!function_exists('full_url')) {
-    /**
-     * 获取资源完整url地址
-     * @param string  $relativeUrl 资源相对地址 不传入则获取域名
-     * @param boolean $domain      是否携带域名 或者直接传入域名
-     * @return string
-     */
-    function full_url($relativeUrl = false, bool $domain = true, $default = '')
-    {
-        $cdnUrl = \think\facade\Env::get('upload.CDN');
-        if (!$cdnUrl) $cdnUrl = request()->upload['cdn'] ?? request()->domain();
-        if ($domain === true) {
-            $domain = $cdnUrl;
-        } elseif ($domain === false) {
-            $domain = '';
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,false);
+        if ($is_post) {
+            curl_setopt($curl, CURLOPT_POST, 1);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
         }
-
-        $relativeUrl = $relativeUrl ?: $default;
-        if (!$relativeUrl) return $domain;
-
-        $regex = "/^((?:[a-z]+:)?\/\/|data:image\/)(.*)/i";
-        if (preg_match('/^http(s)?:\/\//', $relativeUrl) || preg_match($regex, $relativeUrl) || $domain === false) {
-            return $relativeUrl;
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        if (!empty($options['cookie'])) {
+            curl_setopt($curl, CURLOPT_COOKIE, $options['cookie']);
+        } else {
+            $headerArray = array_merge($headerArray,$options);
         }
-        return $domain . $relativeUrl;
+        curl_setopt($curl,CURLOPT_HTTPHEADER,$headerArray);
+        $output = curl_exec($curl);
+        $http_status = curl_errno($curl);
+        $http_msg = curl_error($curl);
+        curl_close($curl);
+        if ($http_status == 0) {
+            return json_decode($output, true);
+        } else {
+            return ['status' => $http_status, 'message' => $http_msg, 'data' => []];
+        }
     }
+
 }

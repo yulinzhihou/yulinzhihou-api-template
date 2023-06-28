@@ -272,12 +272,11 @@ class Base extends BaseController
         /**
          * 更新登录用户的token有效时间
          */
-        $this->pkId = $this->inputData['id'] ?? null;
+        $this->pkId = (int)($this->inputData['id'] ?? 0);
         // 初始化分页当前页数据
-        $this->page = (int)$this->inputData['page'] ?? 0;
+        $this->page = (int)($this->inputData['page'] ?? 0);
         // 初始化分页数量
-        $this->size = (int)$this->inputData['size'] ?? 0;
-
+        $this->size = (int)($this->inputData['size'] ?? 0);
         // 保存单独的请求参数
         if (!empty($this->addField)) {
             $this->inputData = array_merge($this->inputData,$this->addField);
@@ -661,47 +660,6 @@ class Base extends BaseController
             return $this->jr('新增异常，请查看异常日志或者日志文件进行修复');
         }
 
-    }
-
-    /**
-     * curl请求
-     * @param $url  string 请求的url链接
-     * @param $data string|array|mixed 请求的数据
-     * @param bool $is_post 是否是post请求，默认false
-     * @param array $options 是否附带请求头
-     * @return array
-     */
-    public function http(string $url, array $data, bool $is_post=false, array $options=[]):array
-    {
-        $data  = json_encode($data);
-        $headerArray = [
-            'Content-type: application/json;charset=utf-8',
-            'Accept: application/json'
-        ];
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,false);
-        if ($is_post) {
-            curl_setopt($curl, CURLOPT_POST, 1);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-        }
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-        if (!empty($options['cookie'])) {
-            curl_setopt($curl, CURLOPT_COOKIE, $options['cookie']);
-        } else {
-            $headerArray = array_merge($headerArray,$options);
-        }
-        curl_setopt($curl,CURLOPT_HTTPHEADER,$headerArray);
-        $output = curl_exec($curl);
-        $http_status = curl_errno($curl);
-        $http_msg = curl_error($curl);
-        curl_close($curl);
-        if ($http_status == 0) {
-            return json_decode($output, true);
-        } else {
-            return ['status' => $http_status, 'message' => $http_msg, 'data' => []];
-        }
     }
 
     /**
