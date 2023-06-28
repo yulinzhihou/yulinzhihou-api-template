@@ -9,6 +9,8 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
+use think\facade\Env;
+
 return [
     'default'     => 'sync',
     'connections' => [
@@ -24,11 +26,11 @@ return [
         'redis'    => [
             'type'       => 'redis',
             'queue'      => 'default',
-            'host'       => '127.0.0.1',
-            'port'       => 6379,
-            'password'   => '',
-            'select'     => 0,
-            'timeout'    => 0,
+            'port'       =>  Env::get('redis.port',6379),
+            'host'       =>  Env::get('redis.host','127.0.0.1'),
+            'password'   =>  Env::get('redis.pass',''),
+            'select'     =>  Env::get('redis.select',8),
+            'timeout'    =>  0,
             'persistent' => false,
         ],
     ],

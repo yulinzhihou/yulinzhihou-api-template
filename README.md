@@ -27,7 +27,7 @@
 ## 集成功能
 1. 数据迁移功能 `think-migration`
 2. 登录验证 `JWT`
-3. 自动生成 `RSA` 证书。使用姿势 `php think key:generate`
+3. 自动生成 `RSA` 证书。使用姿势 `php think key:generate` 默认生成的证书名称为 `jwt.name` 的名称
 4. 异步队列执行
 5. 接口监控日志，耗时
 6. 增加 `CURD` 生成控制器，模型，验证器命令分别是 `php think yc:create` `php think ym:create` `php think yv:create`

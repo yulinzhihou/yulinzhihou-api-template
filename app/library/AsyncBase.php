@@ -33,14 +33,14 @@ class AsyncBase
                 $isDataExists->save($data);
             } catch (\Exception $e) {
                 ExceptionLog::buildExceptionData($e,__LINE__,__FILE__,__CLASS__,__FUNCTION__,'model','');
-                Log::record($e->getMessage());
+                Log::channel('error')->record($e->getMessage());
             }
         } else {
             try {
                 $model::create($data);
             } catch (\Exception $e) {
                 ExceptionLog::buildExceptionData($e,__LINE__,__FILE__,__CLASS__,__FUNCTION__,'model','');
-                Log::record($e->getMessage());
+                Log::channel('error')->record($e->getMessage());
             }
         }
         Cache::delete($fileType.':version_'.$versionId.':'.$data[$index]);

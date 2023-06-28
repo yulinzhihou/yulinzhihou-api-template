@@ -49,37 +49,37 @@ class checkSign
         // 路由白名单
         $whitelist = Config::get('whitelist');
         $route = strtolower(request()->pathinfo());
+        // Jwt token
+        $jwtToken = $request->header('Authorization');
+        $countDot = explode('.',$jwtToken);
+
         //判断是否是 token 或者是 Session-Cookie 通信模式
         if (Session::has('admin_login_info') && Session::get('admin_login_info') != '') {
             // 表示是Session-Cookie 通讯
             $userInfo = Session::get('admin_login_info');
             // 传递用户信息给请求
             $request->user_info = $userInfo;
-        } elseif ($request->header('authorization') != '') {
+        } elseif ($jwtToken != '' && \count($countDot) === 3) {
             // Token方式
             // 前端请求携带的Token信息，根据请求头字段
-            $token = $request->header('authorization');
+            $token = $request->header('Authorization');
             // 对登录控制器放行
-            if (!in_array($route, $whitelist)) {
-                if (empty($token) || $token == '') {
-                    return $this->doReturn('携带token不合法。请确认请求的 token 否正常！',1,599);
-                }
-
-                $isRas = Env::get('jwt.is_rsa',false);
-                $key = $isRas ? root_path().Env::get('jwt.cert_path').DIRECTORY_SEPARATOR.Env::get('jwt.name').'.pem' : Env::get('jwt.app_key');
-                $key = file_get_contents($key);
-                $jwtInfo = JwtUtil::verification($key, $token,$isRas ? 'RS256' : 'HS256'); // 与签发的key一致
-                if ($jwtInfo['status'] == 200) {
-                    if (Cache::has('admin_login_info:user_id-'.$jwtInfo['data']['data']['uid']) && Cache::get('admin_login_info:user_id-'.$jwtInfo['data']['data']['uid']) != '') {
-                        // 传递用户信息给请求
-                        $request->user_info = $jwtInfo['data']['data']['user_info'];
-                    } else {
-                        return $this->doReturn('退出系统成功',0,599);
-                    }
-
+            $isRas = Config::get('jwt.is_rsa');
+            $key = $isRas ? Config::get('jwt.pub_key_path') : Config::get('jwt.app_key');
+            $key = file_get_contents($key);
+            // 与签发的key一致
+            $jwtInfo = JwtUtil::verification($key, $token,$isRas ? 'RS256' : 'HS256');
+            if ($jwtInfo['status'] == 200) {
+                $userId = $jwtInfo['data']['data']['uid'];
+                if (Cache::has('admin_login_info:user_id-'.$userId) && Cache::get('admin_login_info:user_id-'.$userId) != '') {
+                    // 传递用户信息给请求
+                    $request->user_info = $jwtInfo['data']['data']['user_info'];
                 } else {
-                    return $this->doReturn($jwtInfo['message'],1,599);
+                    return $this->doReturn('退出系统成功',0,599);
                 }
+
+            } else {
+                return $this->doReturn($jwtInfo['message'],1,599);
             }
             // 访问白名单
         } elseif (in_array($route, $whitelist,true)) {

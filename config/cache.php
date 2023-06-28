@@ -4,6 +4,8 @@
 // | 缓存设置
 // +----------------------------------------------------------------------
 
+use think\facade\Env;
+
 return [
     // 默认缓存驱动
     'default' => env('cache.driver', 'file'),
@@ -25,5 +27,13 @@ return [
             'serialize'  => [],
         ],
         // 更多的缓存连接
+        'redis' => [
+            'type'  =>  'redis',
+            'host'  =>  Env::get('redis.host','127.0.0.1'),
+            'pass'  =>  Env::get('redis.pass',''),
+            'port'  =>  Env::get('redis.port',6379),
+            'select'  =>  Env::get('redis.select',8),
+            'expire'  =>  Env::get('redis.expire',1440)
+        ],
     ],
 ];
