@@ -51,7 +51,6 @@ class checkSign
         $route = strtolower(request()->pathinfo());
         // Jwt token
         $jwtToken = $request->header('Authorization');
-        $countDot = explode('.',$jwtToken);
 
         //判断是否是 token 或者是 Session-Cookie 通信模式
         if (Session::has('admin_login_info') && Session::get('admin_login_info') != '') {
@@ -59,7 +58,7 @@ class checkSign
             $userInfo = Session::get('admin_login_info');
             // 传递用户信息给请求
             $request->user_info = $userInfo;
-        } elseif ($jwtToken != '' && \count($countDot) === 3) {
+        } elseif ($jwtToken != '' && \count(explode('.',$jwtToken)) === 3) {
             // Token方式
             // 前端请求携带的Token信息，根据请求头字段
             $token = $request->header('Authorization');
@@ -95,6 +94,20 @@ class checkSign
         }
 
         return $next($request);
+    }
+
+    /**
+     * 自动续约 token, 理论上每进来一次接口请求，相当于就应该刷新token的时间，
+     * 比如token理论上是1个小时，现在第一次接口请求的时候是登录接口的第2秒，那这个时候，token过期时间应该重新激活，
+     * 但这样就会有一个问题，token会无限的刷新和使用，相当于每次请求，都会是一个不同的token。这样好像有点不太礼貌
+     *
+     * @param array $tokenData
+     * @return array
+     */
+    private function refreshToken(array $tokenData):array
+    {
+        //TODO:: 暂时不自动无脑生成吧，让调用者，前端进行刷新TOKEN的逻辑与接口完成
+        return [];
     }
 
 

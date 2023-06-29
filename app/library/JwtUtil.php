@@ -93,13 +93,13 @@ class JwtUtil
             $resultData = json_decode(json_encode($resultData), true);
             return ['status' => 200, 'message' => 'success', 'data' => $resultData];
         } catch (SignatureInvalidException $e) {   // 签名不正确
-            return ['status' => 599, 'message' => $e->getMessage(), 'data' => []];
+            return ['status' => 599, 'message' => 'token 签名不正确', 'data' => []];
         } catch (BeforeValidException $e) {        // 当前签名还不能使用，和签发时生效时间对应
-            return ['status' => 599, 'message' => $e->getMessage(), 'data' => []];
+            return ['status' => 599, 'message' => '当前签名还不能使用，和签发时生效时间对应', 'data' => []];
         } catch (ExpiredException $e) {            // 签名已过期
-            return ['status' => 599, 'message' => $e->getMessage(), 'data' => []];
+            return ['status' => 599, 'message' => 'token 已过期', 'data' => []];
         } catch (\Exception $e) {                  // 其他错误
-            return ['status' => 599, 'message' => $e->getMessage(), 'data' => []];
+            return ['status' => 599, 'message' => 'token 异常', 'data' => []];
         }
     }
 }

@@ -7,6 +7,7 @@ use app\admin\controller\Base;
 use app\admin\model\Admin as AdminModel;
 use app\admin\model\Role as RoleModel;
 use app\library\JwtUtil;
+use app\library\RsaEncrypt;
 use think\facade\Cache;
 use app\admin\validate\Login as LoginValidate;
 use think\facade\Config;
@@ -78,7 +79,7 @@ class Login extends Base
         // token 接口模式，如果是已经正常登录的用户
         // 因为中间件已经解析了 token 模式下的数据
         $token = $this->request->header('Authorization');
-        if (count(explode('.',$token)) === 3) {
+        if ($token && count(explode('.',$token)) === 3) {
             $userInfo = $this->request->user_info;
             return $this->jr('欢迎回来！[token模式]',$userInfo['return_data']);
         }
@@ -159,12 +160,12 @@ class Login extends Base
      */
     public function logout(): \think\response\Json
     {
-        $userId = $this->adminInfo['id'];
+        $userId = $this->adminInfo['id']??0;
         if (Cache::has('admin_login_info:user_id-'.$userId) && Cache::get('admin_login_info:user_id-'.$userId) != '') {
             Cache::delete('admin_login_info:user_id-'.$userId);
         } elseif (Cache::has('admin_login_info') && Cache::get('admin_login_info') != '') {
             Session::delete('admin_login_info');
         }
-        return $this->jr('退出登录成功',true);
+        return $this->jr('退出登录成功',[]);
     }
 }

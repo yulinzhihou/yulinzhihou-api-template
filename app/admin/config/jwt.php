@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 // +----------------------------------------------------------------------
 // | jwt 配置文件
 // +----------------------------------------------------------------------
@@ -6,14 +7,6 @@
 use think\facade\Env;
 
 return [
-//    [JWT]
-//NAME=yulinzhihou-api-template
-//APP_KEY=3EnyhStklmwU1TPzNcp50g8XQu7DOdj6
-//IS_RSA=true
-//CERT_PATH=certs
-//ISS=apiy.test
-//AUD=apiy.test
-//EXP=3600
     // jwt 名称标识
     'name'          => Env::get('jwt.name','yulinzhihou-template-api'),
     // jwt 用于签名的密钥

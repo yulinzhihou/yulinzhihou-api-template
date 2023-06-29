@@ -15,6 +15,9 @@
 > Mysql: mysql  Ver 8.0.33 for macos13.3 on x86_64 (Homebrew)
 > 
 >
+## 接口文档
+https://apifox.com/apidoc/shared-0b705c39-8573-494a-b594-731dd1604c2e?pwd=yulinzhihou.com
+接口文档默认需要密码，密码进群免费获取：849144754
 
 ## `PHP拓展` 自行安装，不懂的百度
 - `gd`
@@ -22,7 +25,8 @@
 - `curl`
 - `fileinfo`
 - `redis`
-- 
+- `json`
+- `openssl`
 
 ## 集成功能
 1. 数据迁移功能 `think-migration`
@@ -34,6 +38,11 @@
 7. 增加提交脚本 `push.sh`,方便提交代码，使用姿势：`bash push.sh '第一次提交'` 即可推送到仓库
 8. 增加自动生成 `控制器` `模型` `验证器` 使用姿势：`bash make.sh admin v1 Goods` 默认生成 `Goods` `控制器` `模型` `验证器`
 9. 增加异常日志及数据管理，线上项目异常的时候会记录到异常日志管理模块。从而更加好的去修复出现的问题
+10. `think-whoops` 插件更加优雅的进行调试报错，可以直接定义错误行号，点击可以跳转到 IDE 指定文件位置
+11. 同时兼容 `session-cookie` 和 `token` 模式请求，`token` 支持刷新等
+12. 接口非对称加密，服务端完成。客户端对应需要配合公钥进行加密，支持请求数据加密和接口返回数据加密。开头在服务端配置文件 `.env` 里面进行设置 [app] 下有 `is_admin_api_secret` `is_api_secret` `is_index_secret`。默认是关闭的
+13. 支持 `RSA` 证书加密接口数据，支持公钥加解密，支持私钥加解密。对应的应用场景不一样
+14. 
 
 ## 部署
 - 第一步：下载或者克隆代码
