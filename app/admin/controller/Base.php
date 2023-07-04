@@ -3,7 +3,6 @@ declare (strict_types = 1);
 
 namespace app\admin\controller;
 
-use app\admin\library\DragonAuth;
 use app\admin\model\ApiLog;
 use app\admin\model\ExceptionLog;
 use app\BaseController;

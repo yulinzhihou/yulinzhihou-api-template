@@ -21,7 +21,7 @@
     ],
     "require": {
         "php": ">=8.1.0",
-        "topthink/framework": "^6.1.0",
+        "topthink/framework": "^8.0",
         "topthink/think-orm": "^3.0",
         "topthink/think-filesystem": "^1.0",
         "topthink/think-migration": "^3.0",
@@ -40,7 +40,7 @@
     "require-dev": {
         "symfony/var-dumper": "^4.2",
         "topthink/think-trace": "^1.0",
-        "yulinzhihou/think-whoops": "^0.0.1"
+        "yulinzhihou/think-whoops": "^0.0.3"
     },
     "autoload": {
         "psr-4": {

@@ -1,13 +1,14 @@
 <?php
 declare (strict_types = 1);
 
-namespace app\admin\model;
+namespace app\api\model;
 
+use app\admin\model\ExceptionLog;
 use think\facade\Log;
 use think\Model;
 
 /**
- * 后台模型基类
+ * API 模型基类
  */
 class Base extends Model
 {
@@ -122,7 +123,7 @@ class Base extends Model
      * @param array $data
      * @return bool
      */
-    public function changeStatus(array $data) : bool
+    public function changeStatus(array $data): bool
     {
         return $this->editData($data);
     }
@@ -340,19 +341,4 @@ class Base extends Model
             return false;
         }
     }
-
-    /**
-     * 根据 ID 查询菜单名称
-     * @param $id
-     * @return string
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\DbException
-     * @throws \think\db\exception\ModelNotFoundException
-     */
-    public function getMenuNameById($id) :string
-    {
-        $data = Menu::where('id',$id)->limit(1)->select()->toArray();
-        return !empty($data) ? $data[0]['title'] : '';
-    }
-
 }

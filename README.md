@@ -1,16 +1,16 @@
 # yulinzhihou-template-api 接口脚手架
 
-> 基于 `thinkphp 6.1.3`
+> 基于 `thinkphp 8.0.0`
 >
 > 运行环境要求PHP8.1+
 >
 > 开发环境
 >
-> OS: MAC OS Ventura 13.3.1(a)
+> OS: MAC OS Ventura 13.4
 >
-> PHP: PHP 8.1.19 (cli) (built: May 12 2023 08:29:35) (NTS)
+> PHP: PHP 8.2.7 (cli) (built: Jun 17 2023 08:16:17) (NTS)
 >
-> Nginx: nginx/1.23.4
+> Nginx: nginx/1.25.1
 >
 > Mysql: mysql  Ver 8.0.33 for macos13.3 on x86_64 (Homebrew)
 > 
