@@ -56,17 +56,9 @@ class apiGuard
             $key = file_get_contents($key);
             // 与签发的key一致
             $jwtInfo = JwtUtil::verification($key, $token,$isRas ? 'RS256' : 'HS256');
-            if ($jwtInfo['status'] == 200) {
-                $userId = $jwtInfo['data']['data']['uid'];
-                if (Cache::has('admin_login_info:user_id-'.$userId) && Cache::get('admin_login_info:user_id-'.$userId) != '') {
-                    // 传递用户信息给请求
-                    $request->user_info = $jwtInfo['data']['data']['user_info'];
-                } else {
-                    return $this->doReturn('退出系统成功',0,599);
-                }
 
-            } else {
-                return $this->doReturn($jwtInfo['message'],1,599);
+            if ($jwtInfo['status'] == 200) {
+                // TODO::应用授权APP
             }
             // 访问白名单
         } elseif (in_array($route, $whitelist,true)) {

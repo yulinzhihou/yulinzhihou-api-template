@@ -57,7 +57,9 @@
         "post-autoload-dump": [
             "@php think service:discover",
             "@php think vendor:publish",
-            "@php think key:generate"
+            "@php think migrate:run",
+            "@php think key:generate",
+            "@php think version"
         ]
     }
 }
