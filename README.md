@@ -16,7 +16,7 @@
 > 
 >
 ## 接口文档
-https://apifox.com/apidoc/shared-0b705c39-8573-494a-b594-731dd1604c2e?pwd=yulinzhihou.com
+https://apifox.com/apidoc/shared-0b705c39-8573-494a-b594-731dd1604c2e
 接口文档默认需要密码，密码进群免费获取：849144754
 
 ## `PHP拓展` 自行安装，不懂的百度
@@ -66,7 +66,7 @@ php think migrate:run
 php think seed:run
 ```
 
-- 第四步：正常使用开发，先建立数据迁移文件。如：增加商品表的数据迁移文件，我这里命名为 `GoodsCreate` 相关使用技巧请参考[官方手册](https://www.kancloud.cn/manual/thinkphp6_0/1037481), [Phinx官方手册](http://docs.phinx.org),[大佬基于 phinx 翻译出的中文手册](https://tsy12321.gitbooks.io/phinx-doc/content/)
+- 第四步：正常使用开发，先建立数据迁移文件。如：增加商品表的数据迁移文件，我这里命名为 `GoodsCreate` 相关使用技巧请参考[官方手册](https://doc.thinkphp.cn/v8_0/preface.html), [Phinx官方手册](http://docs.phinx.org),[大佬基于 phinx 翻译出的中文手册](https://tsy12321.gitbooks.io/phinx-doc/content/)
 
 ```bash
 php think migrate:create GoodsCreate
